@@ -1,0 +1,16 @@
+{
+  "name": "mmp-planning",
+  "version": "8.0.0",
+  "description": "MMP Planning — Pilotage atelier",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [],
+  "author": "MMP",
+  "license": "UNLICENSED"
+}
