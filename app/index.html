@@ -1021,73 +1021,79 @@ const renderKanban=()=>{
   const days=Array.from({length:5},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d;});
   const today=new Date();today.setHours(0,0,0,0);
   const DAYS_FR=['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
-  const fmtISO=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const fmtISO=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   const fmtShort=d=>d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
   const MAX=5;
 
-  // Grouper OF par date
   const byDate={};
   OFs.forEach(o=>{if(!o.date)return;if(!byDate[o.date])byDate[o.date]=[];byDate[o.date].push(o);});
 
-  // Stats semaine
-  const totalSemaine=days.reduce((s,d)=>(s+(byDate[fmtISO(d)]||[]).length),0);
-  const weekRange=`${fmtShort(days[0])} — ${fmtShort(days[4])} ${days[4].getFullYear()}`;
+  const totalSemaine=days.reduce((s,d)=>s+(byDate[fmtISO(d)]||[]).length,0);
+  const weekRange=fmtShort(days[0])+' — '+fmtShort(days[4])+' '+days[4].getFullYear();
 
-  const el=document.getElementById('view-kanban');
-  el.innerHTML=`
-    <div class="ph" style="flex-shrink:0">
-      <div>
-        <h1>Planification</h1>
-        <div class="ph-sub">${weekRange} · ${totalSemaine} OF planifié${totalSemaine!==1?'s':''}</div>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-sm" onclick="window._calDate=new Date(window._calDate);window._calDate.setDate(window._calDate.getDate()-7);renderKanban()">← Précédente</button>
-        <button class="btn btn-sm btn-acc" onclick="window._calDate=new Date();renderKanban()">Aujourd'hui</button>
-        <button class="btn btn-sm" onclick="window._calDate=new Date(window._calDate);window._calDate.setDate(window._calDate.getDate()+7);renderKanban()">Suivante →</button>
-      </div>
-    </div>
-    <div class="cal-outer">
-      <div class="cal-week">
-        ${days.map((d,i)=>{
-          const key=fmtISO(d);
-          const items=byDate[key]||[];
-          const isToday=d.getTime()===today.getTime();
-          const visible=items.slice(0,MAX);
-          const extra=items.length-MAX;
-          return`<div class="cal-day${isToday?' today-day':''}">
-            <div class="cal-day-hd">
-              <div>
-                <div class="cal-day-name">${DAYS_FR[i]}</div>
-                <div class="cal-day-num">${d.getDate()}</div>
-              </div>
-              <div>
-                <div class="cal-day-cnt${items.length?' has-of':''}">${items.length} OF</div>
-                <div style="font-size:9px;color:var(--tx3);text-align:right;margin-top:2px">${d.toLocaleDateString('fr-FR',{month:'short',year:'numeric'})}</div>
-              </div>
-            </div>
-            <div class="cal-day-body">
-              ${items.length===0
-                ?`<div class="cal-empty-day">—</div>`
-                :visible.map(o=>{
-                  const col=eColor(o.etat);
-                  const isMon=o.etat==='au_montage';
-                  return'<div class="cal-card" style="background:${h2rgb(col,.08)};border-color:${h2rgb(col,.18)}" onclick="openOf('${o._id}')">
-                    <div class="cal-card-bar" style="background:${col}"></div>
-                    <div class="cal-card-body">
-                      <div class="cal-card-of" style="color:${col}">${o.of.replace('OF-000','#')}</div>
-                      <div class="cal-card-desc">${esc((o.designation||'').slice(0,32))}</div>
-                    </div>
-                    ${isMon?'<span class="cal-card-badge" style="background:rgba(8,145,178,.15);color:#0891b2">🏭</span>':
-                      o.zone?('<span class="cal-card-badge" style="background:'+h2rgb(col,.12)+';color:'+col+'">Z'+o.zone+'</span>'):''}
-                  </div>`;
-                }).join('')}
-              ${extra>0?`<div class="cal-more" onclick="showDayOFs('${fmtISO(d)}')">+${extra} autre${extra>1?'s':''}…</div>':''}
-            </div>
-          </div>';
-        }).join('')}
-      </div>
-    </div>
-  `;
+  // Construire les colonnes jours
+  let daysHtml='';
+  days.forEach((d,i)=>{
+    const key=fmtISO(d);
+    const items=byDate[key]||[];
+    const isToday=d.getTime()===today.getTime();
+    const visible=items.slice(0,MAX);
+    const extra=items.length-MAX;
+    const dateStr=d.toLocaleDateString('fr-FR',{month:'short',year:'numeric'});
+
+    let cardsHtml='';
+    if(items.length===0){
+      cardsHtml='<div class="cal-empty-day">—</div>';
+    } else {
+      visible.forEach(o=>{
+        const col=eColor(o.etat);
+        const isMon=o.etat==='au_montage';
+        let badge='';
+        if(isMon) badge='<span class="cal-card-badge" style="background:rgba(8,145,178,.15);color:#0891b2">🏭</span>';
+        else if(o.zone) badge='<span class="cal-card-badge" style="background:'+h2rgb(col,.12)+';color:'+col+'">Z'+o.zone+'</span>';
+        cardsHtml+='<div class="cal-card" style="background:'+h2rgb(col,.08)+';border-color:'+h2rgb(col,.18)+'" onclick="openOf(\''+o._id+'\')">'
+          +'<div class="cal-card-bar" style="background:'+col+'"></div>'
+          +'<div class="cal-card-body">'
+            +'<div class="cal-card-of" style="color:'+col+'">'+o.of.replace('OF-000','#')+'</div>'
+            +'<div class="cal-card-desc">'+esc((o.designation||'').slice(0,32))+'</div>'
+          +'</div>'
+          +badge
+          +'</div>';
+      });
+      if(extra>0) cardsHtml+='<div class="cal-more" onclick="showDayOFs(\''+key+'\')">+'+extra+' autre'+(extra>1?'s':'')+'…</div>';
+    }
+
+    const cntClass='cal-day-cnt'+(items.length?' has-of':'');
+    daysHtml+='<div class="cal-day'+(isToday?' today-day':'')+'">'
+      +'<div class="cal-day-hd">'
+        +'<div>'
+          +'<div class="cal-day-name">'+DAYS_FR[i]+'</div>'
+          +'<div class="cal-day-num">'+d.getDate()+'</div>'
+        +'</div>'
+        +'<div>'
+          +'<div class="'+cntClass+'">'+items.length+' OF</div>'
+          +'<div style="font-size:9px;color:var(--tx3);text-align:right;margin-top:2px">'+dateStr+'</div>'
+        +'</div>'
+      +'</div>'
+      +'<div class="cal-day-body">'+cardsHtml+'</div>'
+      +'</div>';
+  });
+
+  document.getElementById('view-kanban').innerHTML=
+    '<div class="ph" style="flex-shrink:0">'
+      +'<div>'
+        +'<h1>Planification</h1>'
+        +'<div class="ph-sub">'+weekRange+' · '+totalSemaine+' OF planifié'+(totalSemaine!==1?'s':'')+'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
+        +'<button class="btn btn-sm" onclick="window._calDate=new Date(window._calDate);window._calDate.setDate(window._calDate.getDate()-7);renderKanban()">← Précédente</button>'
+        +'<button class="btn btn-sm btn-acc" onclick="window._calDate=new Date();renderKanban()">Aujourd\'hui</button>'
+        +'<button class="btn btn-sm" onclick="window._calDate=new Date(window._calDate);window._calDate.setDate(window._calDate.getDate()+7);renderKanban()">Suivante →</button>'
+      +'</div>'
+    +'</div>'
+    +'<div class="cal-outer">'
+      +'<div class="cal-week">'+daysHtml+'</div>'
+    +'</div>';
 };
 
 const showDayOFs=key=>{
@@ -2309,4 +2315,3 @@ const init=()=>{
 init();
 </script>
 </body>
-</html>
