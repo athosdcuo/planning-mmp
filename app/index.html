@@ -789,6 +789,9 @@ const isOperator=()=>{if(!curUser)return false;return(S.accounts[curUser.trig]?.
 const uid=()=>'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const esc=s=>s==null?'':String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const h2r=(h,a)=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const[r,g,b]=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16));return`rgba(${r},${g},${b},${a})`;};
+const h2rgb=(hex,a)=>{hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const[r,g,b]=[0,2,4].map(i=>parseInt(hex.slice(i,i+2),16));return`rgba(${r},${g},${b},${a})`;};
+const darken=(hex,p)=>{hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const[r,g,b]=[0,2,4].map(i=>Math.max(0,Math.round(parseInt(hex.slice(i,i+2),16)*(1-p/100))));return`#${[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('')}`;};
+
 const toast=(msg,err=false)=>{const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.toggle('err',err);t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2500);};
 const ec=k=>S.etats[k]||{label:k,color:'#64748b',group:'todo'};
 const eLabel=k=>ec(k).label;
@@ -1765,8 +1768,6 @@ const PRESETS={
 };
 const ACCENT_PAL=['#3b82f6','#2563eb','#6366f1','#8b5cf6','#a855f7','#d946ef','#ec4899','#f43f5e','#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#0ea5e9'];
 
-const h2rgb=(hex,a)=>{hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const[r,g,b]=[0,2,4].map(i=>parseInt(hex.slice(i,i+2),16));return`rgba(${r},${g},${b},${a})`;};
-const darken=(hex,p)=>{hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const[r,g,b]=[0,2,4].map(i=>Math.max(0,Math.round(parseInt(hex.slice(i,i+2),16)*(1-p/100))));return`#${[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('')}`;};
 
 const applyApp=()=>{
   const r=document.documentElement;
